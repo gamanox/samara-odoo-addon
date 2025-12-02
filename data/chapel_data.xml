@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="parish_chapel_samara" model="parish.chapel">
+        <field name="name">Parroquia SAMARA</field>
+        <field name="code">parroquiasamara</field>
+        <field name="firebase_key">parroquiasamara</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="parish_chapel_san_pedro" model="parish.chapel">
+        <field name="name">Capilla San Pedro</field>
+        <field name="code">capillasanpedro</field>
+        <field name="firebase_key">capillasanpedro</field>
+        <field name="active">True</field>
+    </record>
+
+
+    <record id="samara_dom_0830" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones matutina</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">08:30</field>
+        <field name="end_time">09:30</field>
+    </record>
+
+    <record id="samara_dom_1030" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones dominical</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">10:30</field>
+        <field name="end_time">11:30</field>
+    </record>
+
+    <record id="samara_dom_1200" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones dominical</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">12:00</field>
+        <field name="end_time">13:00</field>
+    </record>
+
+    <record id="samara_dom_1330" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones dominical</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">13:30</field>
+        <field name="end_time">14:30</field>
+    </record>
+
+    <record id="samara_dom_1800" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones vespertina</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">18:00</field>
+        <field name="end_time">19:00</field>
+    </record>
+
+    <record id="samara_dom_2000" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones vespertina</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">20:00</field>
+        <field name="end_time">21:00</field>
+    </record>
+
+    <!-- Lunes a sábado -->
+    <record id="samara_all_0830" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones matutina</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">workDays</field>
+        <field name="weekday">1</field>
+        <field name="start_time">08:30</field>
+        <field name="end_time">09:30</field>
+    </record>
+
+    <record id="samara_all_1800" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_samara"/>
+        <field name="title">Misa de intenciones vespertina</field>
+        <field name="father_name">Pbro. Mario Cruz Mendez</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">workDays</field>
+        <field name="weekday">1</field>
+        <field name="start_time">18:00</field>
+        <field name="end_time">19:00</field>
+    </record>
+
+ 
+    <record id="sanpedro_dom_0900" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_san_pedro"/>
+        <field name="title">Misa matutina</field>
+        <field name="father_name">Pbro. Raul Ramos González</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">09:00</field>
+        <field name="end_time">10:00</field>
+    </record>
+
+    <record id="sanpedro_dom_1930" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_san_pedro"/>
+        <field name="title">Misa vespertina</field>
+        <field name="father_name">Pbro. Raul Ramos González</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">custom</field>
+        <field name="weekday">0</field>
+        <field name="start_time">19:30</field>
+        <field name="end_time">20:30</field>
+    </record>
+
+    <record id="sanpedro_week_0600" model="parish.chapel.mass_time">
+        <field name="chapel_id" ref="parish_chapel_san_pedro"/>
+        <field name="title">Misa matutina</field>
+        <field name="father_name">Pbro. Raul Ramos González</field>
+        <field name="schedule_type">available</field>
+        <field name="recur_type">workDays</field>
+        <field name="weekday">2</field>
+        <field name="start_time">06:00</field>
+        <field name="end_time">07:00</field>
+    </record>
+
+</odoo>

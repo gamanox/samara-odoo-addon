@@ -1,0 +1,13 @@
+<menuitem id="menu_parish_root"
+          name="Parroquia"
+          parent="sale.menu_sale_config"/>
+
+<menuitem id="menu_parish_chapels"
+          name="Capillas"
+          parent="menu_parish_root"
+          action="action_parish_chapel"/>
+
+<menuitem id="menu_parish_schedules"
+          name="Horarios de misa"
+          parent="menu_parish_root"
+          action="action_chapel_schedule"/>

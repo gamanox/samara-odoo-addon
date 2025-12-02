@@ -1,0 +1,39 @@
+<odoo>
+    <record id="view_chapel_schedule_tree" model="ir.ui.view">
+        <field name="name">parish.chapel.schedule.tree</field>
+        <field name="model">parish.chapel.schedule</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="chapel_id"/>
+                <field name="weekday"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="priest"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_chapel_schedule_form" model="ir.ui.view">
+        <field name="name">parish.chapel.schedule.form</field>
+        <field name="model">parish.chapel.schedule</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="chapel_id"/>
+                        <field name="weekday"/>
+                        <field name="start_time"/>
+                        <field name="end_time"/>
+                        <field name="priest"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_chapel_schedule" model="ir.actions.act_window">
+        <field name="name">Horarios de misa</field>
+        <field name="res_model">parish.chapel.schedule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

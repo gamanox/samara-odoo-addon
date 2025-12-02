@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_parish_intention_user,parish.intention user,model_parish_intention,base.group_user,1,1,1,1
+access_parish_intention_portal,parish.intention portal,model_parish_intention,base.group_portal,1,0,1,0
+access_parish_chapel_user,parish.chapel user,model_parish_chapel,base.group_user,1,1,1,1
+access_parish_chapel_mass_time_user,parish.chapel.mass_time user,model_parish_chapel_mass_time,base.group_user,1,1,1,1
+access_parish_chapel_schedule,access_parish_chapel_schedule,model_parish_chapel_schedule,base.group_user,1,1,1,1

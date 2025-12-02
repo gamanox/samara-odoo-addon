@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <template id="product_intention_form_inherit" inherit_id="website_sale.product">
+    <xpath expr="//div[@id='product_details']" position="inside">
+
+      <!-- Mostrar el código interno (solo para depuración, opcional) -->
+      <t t-if="product">
+        <p class="text-muted small">
+          Código interno: <t t-esc="product.default_code"/>
+        </p>
+      </t>
+
+      <!-- Formulario solo para el producto INTENTIONS -->
+      <t t-if="product and product.default_code == 'INTENTIONS'">
+        <t t-set="chapels" t-value="request.env['parish.chapel'].sudo().search([])"/>
+
+        <form action="/shop/intention/add" method="post" class="o_intention_form o_we_website_form mt-3">
+          <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+          <input type="hidden" name="product_id" t-att-value="product.product_variant_id.id"/>
+
+          <div class="alert alert-info mb-3">
+            Complete los datos de la intención de misa antes de añadirla al carrito.
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label>Asunto / Nombre</label>
+              <input class="form-control" type="text" name="name" required="required"/>
+            </div>
+            <div class="col-md-6">
+              <label>Fecha y hora</label>
+              <input class="form-control" type="datetime-local" name="date_time" required="required"/>
+            </div>
+
+            <div class="col-md-6">
+              <label>Lugar / Capilla</label>
+              <select class="form-select" name="chapel_id" required="required">
+                <option value="">-- Selecciona un lugar --</option>
+                <t t-foreach="chapels" t-as="c">
+                  <option t-att-value="c.id">
+                    <t t-esc="c.name"/>
+                  </option>
+                </t>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label>Ofrenda</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="amount"/>
+            </div>
+
+            <div class="col-12">
+              <label>Intención / Mensaje</label>
+              <textarea class="form-control" name="message" rows="3"></textarea>
+            </div>
+
+            <div class="col-12">
+              <button class="btn btn-primary mt-2" type="submit">
+                Añadir intención al carrito
+              </button>
+            </div>
+          </div>
+        </form>
+      </t>
+
+    </xpath>
+  </template>
+</odoo>

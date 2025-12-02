@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+  <!-- ***** Chapel (parish.chapel) views ***** -->
+
+  <record id="view_parish_chapel_tree" model="ir.ui.view">
+    <field name="name">parish.chapel.tree</field>
+    <field name="model">parish.chapel</field>
+    <field name="arch" type="xml">
+      <tree string="Capillas / Lugares">
+        <field name="name"/>
+        <field name="code"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_parish_chapel_form" model="ir.ui.view">
+    <field name="name">parish.chapel.form</field>
+    <field name="model">parish.chapel</field>
+    <field name="arch" type="xml">
+      <form string="Capilla / Lugar">
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="code"/>
+            <field name="active"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_parish_chapel" model="ir.actions.act_window">
+    <field name="name">Capillas</field>
+    <field name="res_model">parish.chapel</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <!-- ***** Parish Intention (parish.intention) views ***** -->
+
+  <record id="view_parish_intention_tree" model="ir.ui.view">
+    <field name="name">parish.intention.tree</field>
+    <field name="model">parish.intention</field>
+    <field name="arch" type="xml">
+      <tree string="Intenciones de misa">
+        <field name="name"/>
+        <field name="partner_id"/>
+        <field name="chapel_id"/>
+        <field name="date_time"/>
+        <field name="amount"/>
+        <field name="state"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_parish_intention_form" model="ir.ui.view">
+    <field name="name">parish.intention.form</field>
+    <field name="model">parish.intention</field>
+    <field name="arch" type="xml">
+      <form string="Intención de misa">
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="partner_id"/>
+              <field name="chapel_id"/>
+              <field name="date_time"/>
+            </group>
+            <group>
+              <field name="amount"/>
+              <field name="website_id"/>
+              <field name="state"/>
+              <field name="sol_id" readonly="1"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Mensaje">
+              <field name="message"/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_parish_intention_calendar" model="ir.ui.view">
+    <field name="name">parish.intention.calendar</field>
+    <field name="model">parish.intention</field>
+    <field name="arch" type="xml">
+      <calendar string="Calendario de intenciones"
+                date_start="date_time"
+                color="chapel_id">
+        <field name="name"/>
+        <field name="chapel_id"/>
+        <field name="partner_id"/>
+        <field name="amount"/>
+        <field name="state"/>
+      </calendar>
+    </field>
+  </record>
+
+  <record id="action_parish_intention" model="ir.actions.act_window">
+    <field name="name">Intenciones</field>
+    <field name="res_model">parish.intention</field>
+    <field name="view_mode">tree,form,calendar</field>
+  </record>
+
+  <!-- ***** Menús ***** -->
+
+  <menuitem id="menu_parish_root"
+            name="Parroquia"
+            parent="sale.sale_menu_root"
+            sequence="50"/>
+
+  <menuitem id="menu_parish_chapel"
+            name="Capillas"
+            parent="menu_parish_root"
+            action="action_parish_chapel"
+            sequence="10"/>
+
+  <menuitem id="menu_parish_intention"
+            name="Intenciones"
+            parent="menu_parish_root"
+            action="action_parish_intention"
+            sequence="20"/>
+
+</odoo>
