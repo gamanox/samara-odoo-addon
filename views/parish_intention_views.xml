@@ -106,23 +106,4 @@
     <field name="view_mode">tree,form,calendar</field>
   </record>
 
-  <!-- ***** Menús ***** -->
-
-  <menuitem id="menu_parish_root"
-            name="Parroquia"
-            parent="sale.sale_menu_root"
-            sequence="50"/>
-
-  <menuitem id="menu_parish_chapel"
-            name="Capillas"
-            parent="menu_parish_root"
-            action="action_parish_chapel"
-            sequence="10"/>
-
-  <menuitem id="menu_parish_intention"
-            name="Intenciones"
-            parent="menu_parish_root"
-            action="action_parish_intention"
-            sequence="20"/>
-
 </odoo>

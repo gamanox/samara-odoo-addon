@@ -1,13 +1,30 @@
-<menuitem id="menu_parish_root"
-          name="Parroquia"
-          parent="sale.menu_sale_config"/>
+<odoo>
+  <menuitem id="menu_parish_root"
+            name="Parroquia"
+            parent="sale.sale_menu_root"
+            sequence="50"/>
 
-<menuitem id="menu_parish_chapels"
-          name="Capillas"
-          parent="menu_parish_root"
-          action="action_parish_chapel"/>
+  <menuitem id="menu_parish_intention"
+            name="Intenciones"
+            parent="menu_parish_root"
+            action="action_parish_intention"
+            sequence="10"/>
 
-<menuitem id="menu_parish_schedules"
-          name="Horarios de misa"
-          parent="menu_parish_root"
-          action="action_chapel_schedule"/>
+  <menuitem id="menu_parish_chapels"
+            name="Capillas"
+            parent="menu_parish_root"
+            action="action_parish_chapel"
+            sequence="20"/>
+
+  <menuitem id="menu_parish_schedules"
+            name="Horarios de misa"
+            parent="menu_parish_root"
+            action="action_chapel_schedule"
+            sequence="30"/>
+
+  <menuitem id="menu_parish_mass_times"
+            name="Horarios por capilla"
+            parent="menu_parish_root"
+            action="action_parish_chapel_mass_time"
+            sequence="40"/>
+</odoo>

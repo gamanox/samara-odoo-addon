@@ -5,10 +5,15 @@
     <field name="name">parish.chapel.mass_time.tree</field>
     <field name="model">parish.chapel.mass_time</field>
     <field name="arch" type="xml">
-      <tree string="Horarios de misa" default_order="chapel_id,name">
+      <tree string="Horarios de misa" default_order="chapel_id,weekday,start_time">
         <field name="chapel_id"/>
+        <field name="weekday"/>
         <field name="name"/>
-        <field name="hour" widget="float_time"/>
+        <field name="father_name"/>
+        <field name="start_time"/>
+        <field name="end_time"/>
+        <field name="schedule_type"/>
+        <field name="recur_type"/>
         <field name="active"/>
       </tree>
     </field>
@@ -24,14 +29,32 @@
             <group>
               <field name="chapel_id" required="1"/>
               <field name="name" required="1"/>
+              <field name="father_name"/>
             </group>
             <group>
-              <field name="hour" widget="float_time"/>
+              <field name="weekday"/>
+              <field name="start_time"/>
+              <field name="end_time"/>
+              <field name="schedule_type"/>
+              <field name="recur_type"/>
               <field name="active"/>
             </group>
           </group>
         </sheet>
       </form>
+    </field>
+  </record>
+
+  <record id="view_parish_chapel_mass_time_search" model="ir.ui.view">
+    <field name="name">parish.chapel.mass_time.search</field>
+    <field name="model">parish.chapel.mass_time</field>
+    <field name="arch" type="xml">
+      <search string="Horarios de misa">
+        <field name="chapel_id"/>
+        <field name="weekday"/>
+        <field name="schedule_type"/>
+        <filter name="active" string="Activos" domain="[('active', '=', True)]" help="Solo registros activos"/>
+      </search>
     </field>
   </record>
 

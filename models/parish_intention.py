@@ -52,7 +52,6 @@ class ParishIntention(models.Model):
             ("cancel", "Cancelada"),
         ],
         default="draft",
-        tracking=True,
     )
 
     @api.constrains("date_time")
