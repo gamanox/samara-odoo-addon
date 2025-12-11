@@ -28,8 +28,8 @@
               <input class="form-control" type="text" name="name" required="required"/>
             </div>
             <div class="col-md-6">
-              <label>Fecha y hora</label>
-              <input class="form-control" type="datetime-local" name="date_time" required="required"/>
+              <label>Fecha</label>
+              <input class="form-control" type="date" name="date_only" id="date_only" required="required"/>
             </div>
 
             <div class="col-md-6">
@@ -41,6 +41,16 @@
                     <t t-esc="c.name"/>
                   </option>
                 </t>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label>Horarios disponibles</label>
+              <p class="text-muted small mb-1" id="chapel-schedule-status">
+                Selecciona una capilla y fecha para ver los horarios de misa.
+              </p>
+              <select class="form-select" id="chapel-schedule-select" name="schedule_id" disabled="disabled">
+                <option value="">-- Selecciona un horario --</option>
               </select>
             </div>
 
@@ -61,6 +71,86 @@
             </div>
           </div>
         </form>
+        <script>
+          (function () {
+            const chapelSelect = document.querySelector('select[name="chapel_id"]');
+            const dateInput = document.querySelector('#date_only');
+            const scheduleSelect = document.querySelector('#chapel-schedule-select');
+            const statusEl = document.getElementById('chapel-schedule-status');
+
+            if (!chapelSelect || !dateInput || !scheduleSelect || !statusEl) {
+              return;
+            }
+
+            function resetSelect(message) {
+              scheduleSelect.innerHTML = '<option value="">-- Selecciona un horario --</option>';
+              scheduleSelect.disabled = true;
+              scheduleSelect.required = false;
+              statusEl.textContent = message;
+              statusEl.classList.add('text-muted');
+            }
+
+            function renderSchedules(items) {
+              scheduleSelect.innerHTML = '';
+              const placeholder = document.createElement('option');
+              placeholder.value = '';
+              placeholder.textContent = '-- Selecciona un horario --';
+              scheduleSelect.appendChild(placeholder);
+
+              if (!items || !items.length) {
+                resetSelect('No hay horarios disponibles para la fecha seleccionada.');
+                return;
+              }
+
+              statusEl.textContent = 'Selecciona un horario disponible:';
+              statusEl.classList.add('text-muted');
+              items.forEach((item) => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                const time = [item.start_time, item.end_time].filter(Boolean).join(' - ');
+                const priest = item.father_name ? ` — ${item.father_name}` : '';
+                opt.textContent = `${time}${priest}`;
+                scheduleSelect.appendChild(opt);
+              });
+              scheduleSelect.disabled = false;
+              scheduleSelect.required = true;
+            }
+
+            async function loadSchedules() {
+              const chapelId = chapelSelect.value;
+              const dateStr = dateInput.value;
+              resetSelect('Selecciona una capilla y fecha para ver los horarios de misa.');
+
+              if (!chapelId || !dateStr) {
+                return;
+              }
+
+              statusEl.textContent = 'Cargando horarios...';
+              statusEl.classList.add('text-muted');
+
+              try {
+                const res = await fetch('/shop/chapel/schedules', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ chapel_id: chapelId, date_only: dateStr }),
+                });
+                console.log("horarios: ",res);
+                if (!res.ok) {
+                  throw new Error('Error al consultar horarios');
+                }
+                const data = await res.json();
+                renderSchedules(data.schedules || []);
+              } catch (err) {
+                console.error(err);
+                resetSelect('No se pudieron cargar los horarios. Intenta de nuevo.');
+              }
+            }
+
+            resetSelect('Selecciona una capilla y fecha para ver los horarios de misa.');
+            chapelSelect.addEventListener('change', loadSchedules);
+            dateInput.addEventListener('change', loadSchedules);
+          })();
+        </script>
       </t>
 
     </xpath>
