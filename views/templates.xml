@@ -13,6 +13,7 @@
       <!-- Formulario solo para el producto INTENTIONS -->
       <t t-if="product and product.default_code == 'INTENTIONS'">
         <t t-set="chapels" t-value="request.env['parish.chapel'].sudo().search([])"/>
+        <t t-set="chapel_schedule_url" t-value="'/shop/chapel/schedules'"/>
 
         <form action="/shop/intention/add" method="post" class="o_intention_form o_we_website_form mt-3">
           <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -23,16 +24,11 @@
           </div>
 
           <div class="row g-3">
-            <div class="col-md-6">
+            <!-- <div class="col-md-6">
               <label>Asunto / Nombre</label>
               <input class="form-control" type="text" name="name" required="required"/>
-            </div>
-            <div class="col-md-6">
-              <label>Fecha</label>
-              <input class="form-control" type="date" name="date_only" id="date_only" required="required"/>
-            </div>
-
-            <div class="col-md-6">
+            </div> -->
+             <div class="col-md-6">
               <label>Lugar / Capilla</label>
               <select class="form-select" name="chapel_id" required="required">
                 <option value="">-- Selecciona un lugar --</option>
@@ -43,6 +39,12 @@
                 </t>
               </select>
             </div>
+            <div class="col-md-6">
+              <label>Fecha</label>
+              <input class="form-control" type="date" name="date_only" id="date_only" required="required"/>
+            </div>
+
+           
 
             <div class="col-12">
               <label>Horarios disponibles</label>
@@ -54,13 +56,16 @@
               </select>
             </div>
 
-            <div class="col-md-6">
-              <label>Ofrenda</label>
-              <input class="form-control" type="number" step="0.01" min="0" name="amount"/>
+            <div class="col-12">
+              <label>Tipo de Intención</label>
+              <p class="text-muted small mb-1" id="chapel-schedule-status">Selecciona un tipo de Intención              </p>
+              <select class="form-select" id="chapel-schedule-select" name="schedule_id" disabled="disabled">
+                <option value="">-- Selecciona un tipo --</option>
+              </select>
             </div>
 
             <div class="col-12">
-              <label>Intención / Mensaje</label>
+              <label>Nombre</label>
               <textarea class="form-control" name="message" rows="3"></textarea>
             </div>
 
@@ -73,6 +78,7 @@
         </form>
         <script>
           (function () {
+            const schedulesUrl = "<t t-esc='chapel_schedule_url'/>";
             const chapelSelect = document.querySelector('select[name="chapel_id"]');
             const dateInput = document.querySelector('#date_only');
             const scheduleSelect = document.querySelector('#chapel-schedule-select');
@@ -129,12 +135,27 @@
               statusEl.classList.add('text-muted');
 
               try {
-                const res = await fetch('/shop/chapel/schedules', {
+                // Convertir la fecha seleccionada a nombre de día (lunes-domingo)
+                const dayNames = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+                const parsedDate = dateStr ? new Date(`${dateStr}T00:00:00`) : null;
+                const jsDay = parsedDate ? parsedDate.getDay() : null; // domingo=0 ... sábado=6
+                const weekdayIdx = jsDay !== null ? (jsDay + 6) % 7 : null; // lunes=0 ... domingo=6
+                const weekdayName = weekdayIdx !== null ? dayNames[weekdayIdx] : null;
+
+                const res = await fetch(schedulesUrl, {
                   method: 'POST',
-                  headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ chapel_id: chapelId, date_only: dateStr }),
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                  },
+                  body: JSON.stringify({
+                    chapel_id: chapelId,
+                    date_only: weekdayName || dateStr,
+                    date_value: dateStr,
+                  }),
                 });
-                console.log("horarios: ",res);
+
                 if (!res.ok) {
                   throw new Error('Error al consultar horarios');
                 }

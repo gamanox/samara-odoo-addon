@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from odoo import http
@@ -128,56 +129,98 @@ class ParishIntentionsController(http.Controller):
         # 8) Redirect to cart
         return request.redirect("/shop/cart")
 
-    @http.route(['/shop/chapel/schedules'], type='json', auth="public", methods=['POST'], website=True, csrf=False)
+    @http.route(
+        ['/shop/chapel/schedules'],
+        type='http',
+        auth="public",
+        methods=['GET', 'POST'],
+        website=True,
+        csrf=False,
+    )
     def get_chapel_schedules(self, chapel_id=None, date_only=None, **post):
-        chapel_id = chapel_id or post.get("chapel_id")
-        date_only = date_only or post.get("date_only")
+        # Permite recibir JSON, formulario o querystring
+        payload = {}
+        try:
+            payload = request.httprequest.get_json(silent=True) or {}
+        except Exception:
+            payload = {}
 
-        if not chapel_id or not date_only:
-            return {"schedules": []}
+        def _json_response(payload):
+            return request.make_response(
+                json.dumps(payload),
+                headers=[('Content-Type', 'application/json')],
+            )
+
+        chapel_id = chapel_id or payload.get("chapel_id") or post.get("chapel_id")
+        # date_only manda el nombre de día (lunes-domingo) o la fecha; si no viene, caemos en date_value
+        date_token = (
+            date_only
+            or payload.get("date_only")
+            or post.get("date_only")
+            or payload.get("date_value")
+            or post.get("date_value")
+        )
+
+        if not chapel_id or not date_token:
+            return _json_response({"schedules": []})
 
         try:
             chapel_id = int(chapel_id)
         except Exception:
-            return {"schedules": []}
+            return _json_response({"schedules": []})
 
         chapel = request.env["parish.chapel"].sudo().browse(chapel_id)
         if not chapel.exists():
-            return {"schedules": []}
+            return _json_response({"schedules": []})
 
-        try:
-            date_obj = datetime.strptime(date_only, "%Y-%m-%d").date()
-        except Exception:
-            return {"schedules": []}
+        weekday_idx = None
+        day_name_map = {
+            "lunes": 0,
+            "Lunes": 0,
+            "martes": 1,
+            "Martes": 1,
+            "miercoles": 2,
+            "miércoles": 2,
+            "Miércoles": 2,
+            "Miercoles": 2,
+            "jueves": 3,
+            "Jueves": 3,
+            "viernes": 4,
+            "Viernes": 4,
+            "sabado": 5,
+            "Sabado": 5,
+            "Sábado": 5,
+            "sábado": 5,
+            "domingo": 6,
+            "Domingo": 6,
+        }
 
-        # Python weekday: Monday=0 ... Sunday=6. Data uses Sunday=0.
-        python_weekday = date_obj.weekday()
-        weekday = (python_weekday + 1) % 7
-        weekday_str = str(weekday)
+        if isinstance(date_token, (int, float)):
+            weekday_idx = int(date_token)
+        else:
+            token_str = str(date_token).strip()
+            # Intentar parsear fecha
+            try:
+                date_obj = datetime.strptime(token_str, "%Y-%m-%d").date()
+                weekday_idx = date_obj.weekday()
+            except Exception:
+                # Intentar nombre de día
+                weekday_idx = day_name_map.get(token_str.lower())
+                if weekday_idx is None and token_str.isdigit():
+                    weekday_idx = int(token_str)
+
+        if weekday_idx is None or weekday_idx < 0 or weekday_idx > 6:
+            return _json_response({"schedules": []})
+
+        weekday_str = str(weekday_idx)
 
         schedules = request.env["parish.chapel.mass_time"].sudo().search([
             ("chapel_id", "=", chapel.id),
-            ("schedule_type", "=", "available"),
-            ("active", "=", True),
+            ("weekday", "=", weekday_str),
         ])
+        schedules = schedules.sorted(key=lambda s: s.start_time or "")
 
-        def matches(schedule):
-            # Siempre aplica para todos los días
-            if schedule.recur_type == "allDays":
-                return True
-            # Días laborales: anclaje en weekday
-            if schedule.recur_type == "workDays":
-                if schedule.weekday == "1":
-                    return weekday_str in {"1", "2", "3", "4", "5"}  # lunes a viernes
-                if schedule.weekday == "2":
-                    return weekday_str in {"2", "3", "4", "5", "6"}  # martes a sábado
-                return weekday_str in {"1", "2", "3", "4", "5"}
-            # Custom: coincide solo el día
-            return schedule.weekday == weekday_str
-
-        schedules = schedules.filtered(matches).sorted(key=lambda s: s.start_time or "")
-
-        return {
+        result = {
             "schedules": [
                 {
                     "id": sched.id,
@@ -188,5 +231,8 @@ class ParishIntentionsController(http.Controller):
                     "recur_type": sched.recur_type,
                 }
                 for sched in schedules
-            ]
+            ],
+           "week_day": weekday_str,
         }
+
+        return _json_response(result)
