@@ -58,15 +58,18 @@
 
             <div class="col-12">
               <label>Tipo de Intención</label>
-              <p class="text-muted small mb-1" id="chapel-schedule-status">Selecciona un tipo de Intención              </p>
-              <select class="form-select" id="chapel-schedule-select" name="schedule_id" disabled="disabled">
+              <select class="form-select" id="intention-type-select" name="intention_type" required="required">
                 <option value="">-- Selecciona un tipo --</option>
+                <option value="1">Accion de gracias</option>
+                <option value="2">Intencion especial</option>
+                <option value="3">Difunto</option>
+                <option value="4">Salud</option>
               </select>
             </div>
 
             <div class="col-12">
               <label>Nombre</label>
-              <textarea class="form-control" name="message" rows="3"></textarea>
+              <input class="form-control" type="text" name="message" placeholder="Nombre de la persona o apellidos de la familia"/>
             </div>
 
             <div class="col-12">
