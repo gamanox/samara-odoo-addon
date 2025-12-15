@@ -14,9 +14,11 @@ class ParishIntentionsController(http.Controller):
         order = request.website.sale_get_order(force_create=True)
 
         # 2) Determine partner (logged in or public)
-        partner = request.env.user.partner_id
-        if not partner or partner._is_public():
-            partner = request.env.ref("base.public_partner")
+        user = request.env.user
+        partner = user.partner_id
+        is_public = getattr(user, "_is_public", lambda: False)()
+        if not partner or is_public:
+            partner = request.website.user_id.sudo().partner_id
 
         # 3) Validate product
         product_id = post.get("product_id")
@@ -37,6 +39,10 @@ class ParishIntentionsController(http.Controller):
         message = post.get("message") or ""
         date_only = post.get("date_only")
         schedule_id = post.get("schedule_id")
+        intention_type = post.get("intention_type")
+        valid_intention_types = {"1", "2", "3", "4"}
+        if intention_type and intention_type not in valid_intention_types:
+            raise UserError("Tipo de intencion invalido.")
 
         amount = 0.0
         if post.get("amount"):
@@ -90,10 +96,12 @@ class ParishIntentionsController(http.Controller):
             "partner_id": partner.id,
             "message": message,
             "chapel_id": chapel.id,
+            "schedule_id": schedule.id if schedule else False,
             "date_time": date_time,
             "amount": amount,
             "website_id": request.website.id,
             "state": "in_cart",
+            "intention_type": intention_type,
         }
 
         intention = request.env["parish.intention"].sudo().create(intention_vals)
@@ -112,6 +120,14 @@ class ParishIntentionsController(http.Controller):
             extra_bits.append(date_only)
         if schedule and schedule.start_time:
             extra_bits.append(schedule.start_time)
+        if intention_type:
+            intention_type_labels = {
+                "1": "Accion de gracias",
+                "2": "Intencion especial",
+                "3": "Difunto",
+                "4": "Salud",
+            }
+            extra_bits.append(intention_type_labels.get(intention_type, intention_type))
         if name:
             extra_bits.append(name)
 
