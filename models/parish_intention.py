@@ -31,6 +31,10 @@ class ParishIntention(models.Model):
 
     message = fields.Text("Intención / Mensaje")
 
+    date_start = fields.Date("Fecha inicio")
+    date_end = fields.Date("Fecha fin")
+    date_range_text = fields.Char("Rango de fechas (lista)")
+
     intention_type = fields.Selection(
         [
             ("1", "Accion de gracias"),

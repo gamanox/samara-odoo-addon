@@ -35,9 +35,26 @@ class ParishIntentionsController(http.Controller):
             raise UserError("Producto no encontrado.")
 
         # 4) Read form data
+        add_qty_raw = post.get("add_qty") or 1
+        try:
+            add_qty = int(float(add_qty_raw))
+        except Exception:
+            add_qty = 1
+        if add_qty <= 0:
+            add_qty = 1
+
         name = post.get("name") or ""
         message = post.get("message") or ""
-        date_only = post.get("date_only")
+        date_start = post.get("date_start") or post.get("date_only")
+        date_end = post.get("date_end") or date_start
+        raw_date_range = post.get("date_range_list") or ""
+        range_dates = []
+        if raw_date_range:
+            range_dates = [d for d in raw_date_range.split(",") if d]
+            if range_dates and not date_start:
+                date_start = range_dates[0]
+            if range_dates and not date_end:
+                date_end = range_dates[-1]
         schedule_id = post.get("schedule_id")
         intention_type = post.get("intention_type")
         valid_intention_types = {"1", "2", "3", "4"}
@@ -64,13 +81,25 @@ class ParishIntentionsController(http.Controller):
         if not chapel.exists():
             raise UserError("La capilla seleccionada no existe.")
 
-        if not date_only:
-            raise UserError("Debes indicar una fecha.")
+        if not date_start:
+            raise UserError("Debes indicar una fecha de inicio.")
 
         try:
-            base_date = datetime.strptime(date_only, "%Y-%m-%d")
+            base_date_start = datetime.strptime(date_start, "%Y-%m-%d")
         except Exception:
-            raise UserError("La fecha no es válida.")
+            raise UserError("La fecha de inicio no es válida.")
+
+        try:
+            base_date_end = datetime.strptime(date_end, "%Y-%m-%d")
+        except Exception:
+            raise UserError("La fecha fin no es válida.")
+
+        if base_date_end < base_date_start:
+            raise UserError("La fecha fin debe ser mayor o igual a la fecha inicio.")
+
+        days_in_range = (base_date_end - base_date_start).days + 1
+        if days_in_range > add_qty:
+            raise UserError("El rango de fechas excede la cantidad seleccionada.")
 
         schedule = None
         if schedule_id:
@@ -82,13 +111,13 @@ class ParishIntentionsController(http.Controller):
             if not schedule.exists() or schedule.chapel_id.id != chapel.id:
                 raise UserError("El horario seleccionado no pertenece a la capilla elegida.")
 
-        date_time = base_date
+        date_time = base_date_start
         if schedule and schedule.start_time:
             try:
                 hour_str, minute_str = (schedule.start_time or "00:00").split(":")
-                date_time = base_date.replace(hour=int(hour_str), minute=int(minute_str), second=0, microsecond=0)
+                date_time = base_date_start.replace(hour=int(hour_str), minute=int(minute_str), second=0, microsecond=0)
             except Exception:
-                date_time = base_date
+                date_time = base_date_start
 
         # 5) Create the intention
         intention_vals = {
@@ -98,6 +127,9 @@ class ParishIntentionsController(http.Controller):
             "chapel_id": chapel.id,
             "schedule_id": schedule.id if schedule else False,
             "date_time": date_time,
+            "date_start": base_date_start.date(),
+            "date_end": base_date_end.date(),
+            "date_range_text": ",".join(range_dates) if range_dates else None,
             "amount": amount,
             "website_id": request.website.id,
             "state": "in_cart",
@@ -107,7 +139,7 @@ class ParishIntentionsController(http.Controller):
         intention = request.env["parish.intention"].sudo().create(intention_vals)
 
         # 6) Add product to cart
-        res = order._cart_update(product_id=product.id, add_qty=1)
+        res = order._cart_update(product_id=product.id, add_qty=add_qty)
         line = request.env["sale.order.line"].browse(res.get("line_id"))
 
         # 7) Customize sale order line
@@ -116,8 +148,9 @@ class ParishIntentionsController(http.Controller):
 
         if chapel:
             extra_bits.append(chapel.name)
-        if date_only:
-            extra_bits.append(date_only)
+        if date_start:
+            date_range_text = date_start if date_end == date_start else f"{date_start} - {date_end}"
+            extra_bits.append(date_range_text)
         if schedule and schedule.start_time:
             extra_bits.append(schedule.start_time)
         if intention_type:
