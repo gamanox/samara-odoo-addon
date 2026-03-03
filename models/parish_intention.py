@@ -24,7 +24,26 @@ class ParishIntention(models.Model):
         required=True,
     )
 
+    schedule_id = fields.Many2one(
+        "parish.chapel.mass_time",
+        string="Horario seleccionado",
+    )
+
     message = fields.Text("Intención / Mensaje")
+
+    date_start = fields.Date("Fecha inicio")
+    date_end = fields.Date("Fecha fin")
+    date_range_text = fields.Char("Rango de fechas (lista)")
+
+    intention_type = fields.Selection(
+        [
+            ("1", "Accion de gracias"),
+            ("2", "Intencion especial"),
+            ("3", "Difunto"),
+            ("4", "Salud"),
+        ],
+        string="Tipo de intencion",
+    )
 
     amount = fields.Monetary("Ofrenda", currency_field="currency_id")
 

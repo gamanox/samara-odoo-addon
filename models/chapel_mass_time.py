@@ -19,13 +19,13 @@ class ParishChapelMassTime(models.Model):
     # 0–6: día de la semana (alinear con tu dato; ver nota más abajo)
     weekday = fields.Selection(
         [
-            ("0", "Domingo"),
-            ("1", "Lunes"),
-            ("2", "Martes"),
-            ("3", "Miércoles"),
-            ("4", "Jueves"),
-            ("5", "Viernes"),
-            ("6", "Sábado"),
+            ("0", "Lunes"),
+            ("1", "Martes"),
+            ("2", "Miércoles"),
+            ("3", "Jueves"),
+            ("4", "Viernes"),
+            ("5", "Sabado"),
+            ("6", "Domingo"),
         ],
         string="Día de la semana",
         required=True,
