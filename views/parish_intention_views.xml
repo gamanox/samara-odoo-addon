@@ -45,6 +45,8 @@
     <field name="arch" type="xml">
       <tree string="Intenciones de misa">
         <field name="name"/>
+        <field name="intention_type"/>
+        <field name="message"/>
         <field name="partner_id"/>
         <field name="chapel_id"/>
         <field name="date_time"/>

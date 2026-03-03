@@ -84,6 +84,38 @@
             </div>
 
             <div class="col-12">
+              <label>Tipo de Intención (opcional 2)</label>
+              <select class="form-select" name="intention_type_2">
+                <option value="">-- Sin segunda intención --</option>
+                <option value="1">Accion de gracias</option>
+                <option value="2">Intencion especial</option>
+                <option value="3">Difunto</option>
+                <option value="4">Salud</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label>Nombre (opcional 2)</label>
+              <input class="form-control" type="text" name="message_2" placeholder="Nombre de la persona o apellidos de la familia"/>
+            </div>
+
+            <div class="col-12">
+              <label>Tipo de Intención (opcional 3)</label>
+              <select class="form-select" name="intention_type_3">
+                <option value="">-- Sin tercera intención --</option>
+                <option value="1">Accion de gracias</option>
+                <option value="2">Intencion especial</option>
+                <option value="3">Difunto</option>
+                <option value="4">Salud</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label>Nombre (opcional 3)</label>
+              <input class="form-control" type="text" name="message_3" placeholder="Nombre de la persona o apellidos de la familia"/>
+            </div>
+
+            <div class="col-12">
               <button class="btn btn-primary mt-2" type="submit">
                 Añadir intención al carrito
               </button>
