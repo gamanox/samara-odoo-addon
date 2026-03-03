@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
   <template id="product_intention_form_inherit" inherit_id="website_sale.product">
+    <xpath expr="//div[@id='add_to_cart_wrap']" position="attributes">
+      <attribute name="t-if">not (product and product.default_code == 'INTENTIONS')</attribute>
+    </xpath>
+
     <xpath expr="//div[@id='product_details']" position="inside">
 
       <!-- Mostrar el código interno (solo para depuración, opcional) -->
@@ -77,6 +81,38 @@
             <div class="col-12">
               <label>Nombre</label>
               <input class="form-control" type="text" name="message" placeholder="Nombre de la persona o apellidos de la familia"/>
+            </div>
+
+            <div class="col-12">
+              <label>Tipo de Intención (opcional 2)</label>
+              <select class="form-select" name="intention_type_2">
+                <option value="">-- Sin segunda intención --</option>
+                <option value="1">Accion de gracias</option>
+                <option value="2">Intencion especial</option>
+                <option value="3">Difunto</option>
+                <option value="4">Salud</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label>Nombre (opcional 2)</label>
+              <input class="form-control" type="text" name="message_2" placeholder="Nombre de la persona o apellidos de la familia"/>
+            </div>
+
+            <div class="col-12">
+              <label>Tipo de Intención (opcional 3)</label>
+              <select class="form-select" name="intention_type_3">
+                <option value="">-- Sin tercera intención --</option>
+                <option value="1">Accion de gracias</option>
+                <option value="2">Intencion especial</option>
+                <option value="3">Difunto</option>
+                <option value="4">Salud</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label>Nombre (opcional 3)</label>
+              <input class="form-control" type="text" name="message_3" placeholder="Nombre de la persona o apellidos de la familia"/>
             </div>
 
             <div class="col-12">

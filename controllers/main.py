@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from odoo import http
 from odoo.http import request
@@ -43,8 +43,7 @@ class ParishIntentionsController(http.Controller):
         if add_qty <= 0:
             add_qty = 1
 
-        name = post.get("name") or ""
-        message = post.get("message") or ""
+        name = (post.get("name") or "").strip()
         date_start = post.get("date_start") or post.get("date_only")
         date_end = post.get("date_end") or date_start
         raw_date_range = post.get("date_range_list") or ""
@@ -56,10 +55,32 @@ class ParishIntentionsController(http.Controller):
             if range_dates and not date_end:
                 date_end = range_dates[-1]
         schedule_id = post.get("schedule_id")
-        intention_type = post.get("intention_type")
         valid_intention_types = {"1", "2", "3", "4"}
-        if intention_type and intention_type not in valid_intention_types:
-            raise UserError("Tipo de intencion invalido.")
+
+        intention_entries = []
+        intention_field_pairs = [
+            ("intention_type", "message"),
+            ("intention_type_2", "message_2"),
+            ("intention_type_3", "message_3"),
+        ]
+        for block_idx, (type_key, message_key) in enumerate(intention_field_pairs, start=1):
+            block_type = (post.get(type_key) or "").strip()
+            block_message = (post.get(message_key) or "").strip()
+
+            if not block_type and not block_message:
+                continue
+            if block_type and block_type not in valid_intention_types:
+                raise UserError(f"Tipo de intencion invalido en bloque {block_idx}.")
+            if not block_type:
+                raise UserError(f"Selecciona un tipo de intencion en bloque {block_idx}.")
+
+            intention_entries.append({
+                "intention_type": block_type,
+                "message": block_message,
+            })
+
+        if not intention_entries:
+            raise UserError("Debes capturar al menos una intención.")
 
         amount = 0.0
         if post.get("amount"):
@@ -100,6 +121,9 @@ class ParishIntentionsController(http.Controller):
         days_in_range = (base_date_end - base_date_start).days + 1
         if days_in_range > add_qty:
             raise UserError("El rango de fechas excede la cantidad seleccionada.")
+        selected_dates = [base_date_start + timedelta(days=offset) for offset in range(days_in_range)]
+        if not range_dates:
+            range_dates = [date_item.strftime("%Y-%m-%d") for date_item in selected_dates]
 
         schedule = None
         if schedule_id:
@@ -111,32 +135,42 @@ class ParishIntentionsController(http.Controller):
             if not schedule.exists() or schedule.chapel_id.id != chapel.id:
                 raise UserError("El horario seleccionado no pertenece a la capilla elegida.")
 
-        date_time = base_date_start
-        if schedule and schedule.start_time:
-            try:
-                hour_str, minute_str = (schedule.start_time or "00:00").split(":")
-                date_time = base_date_start.replace(hour=int(hour_str), minute=int(minute_str), second=0, microsecond=0)
-            except Exception:
-                date_time = base_date_start
+        # 5) Create intentions (1 a 3 bloques) por cada día seleccionado
+        intention_vals_list = []
+        for intention_entry in intention_entries:
+            for day_date in selected_dates:
+                intention_datetime = day_date
+                if schedule and schedule.start_time:
+                    try:
+                        hour_str, minute_str = (schedule.start_time or "00:00").split(":")
+                        intention_datetime = day_date.replace(
+                            hour=int(hour_str),
+                            minute=int(minute_str),
+                            second=0,
+                            microsecond=0,
+                        )
+                    except Exception:
+                        intention_datetime = day_date
 
-        # 5) Create the intention
-        intention_vals = {
-            "name": name or product.display_name,
-            "partner_id": partner.id,
-            "message": message,
-            "chapel_id": chapel.id,
-            "schedule_id": schedule.id if schedule else False,
-            "date_time": date_time,
-            "date_start": base_date_start.date(),
-            "date_end": base_date_end.date(),
-            "date_range_text": ",".join(range_dates) if range_dates else None,
-            "amount": amount,
-            "website_id": request.website.id,
-            "state": "in_cart",
-            "intention_type": intention_type,
-        }
+                intention_vals_list.append({
+                    "name": intention_entry["message"] or name or product.display_name,
+                    "partner_id": partner.id,
+                    "message": intention_entry["message"],
+                    "chapel_id": chapel.id,
+                    "schedule_id": schedule.id if schedule else False,
+                    "date_time": intention_datetime,
+                    "date_start": day_date.date(),
+                    "date_end": day_date.date(),
+                    "date_range_text": ",".join(range_dates) if range_dates else None,
+                    "amount": amount,
+                    "website_id": request.website.id,
+                    "state": "in_cart",
+                    "intention_type": intention_entry["intention_type"],
+                })
 
-        intention = request.env["parish.intention"].sudo().create(intention_vals)
+        intentions = request.env["parish.intention"].sudo().create(intention_vals_list)
+        primary_intention = intentions[0]
+        primary_intention_type = intention_entries[0]["intention_type"]
 
         # 6) Add product to cart
         res = order._cart_update(product_id=product.id, add_qty=add_qty)
@@ -153,27 +187,24 @@ class ParishIntentionsController(http.Controller):
             extra_bits.append(date_range_text)
         if schedule and schedule.start_time:
             extra_bits.append(schedule.start_time)
-        if intention_type:
-            intention_type_labels = {
-                "1": "Accion de gracias",
-                "2": "Intencion especial",
-                "3": "Difunto",
-                "4": "Salud",
-            }
-            extra_bits.append(intention_type_labels.get(intention_type, intention_type))
-        if name:
-            extra_bits.append(name)
+        intention_type_labels = {
+            "1": "Accion de gracias",
+            "2": "Intencion especial",
+            "3": "Difunto",
+            "4": "Salud",
+        }
+        extra_bits.append(intention_type_labels.get(primary_intention_type, primary_intention_type))
 
         if extra_bits:
             line_name = f"{product.display_name} — " + " / ".join(extra_bits)
 
         line.sudo().write({
-            "parish_intention_id": intention.id,
+            "parish_intention_id": primary_intention.id,
             "name": line_name,
             "price_unit": amount if amount > 0 else line.price_unit,
         })
 
-        intention.sudo().write({"sol_id": line.id})
+        intentions.sudo().write({"sol_id": line.id})
 
         # 8) Redirect to cart
         return request.redirect("/shop/cart")
