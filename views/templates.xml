@@ -18,6 +18,9 @@
         <form action="/shop/intention/add" method="post" class="o_intention_form o_we_website_form mt-3">
           <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
           <input type="hidden" name="product_id" t-att-value="product.product_variant_id.id"/>
+          <input type="hidden" name="add_qty" id="intention-add-qty" value="1"/>
+          <input type="hidden" name="date_range_list" id="date-range-list" value=""/>
+          <div id="chapel-schedule-config" class="d-none" t-att-data-schedules-url="chapel_schedule_url"></div>
 
           <div class="alert alert-info mb-3">
             Complete los datos de la intención de misa antes de añadirla al carrito.
@@ -28,7 +31,7 @@
               <label>Asunto / Nombre</label>
               <input class="form-control" type="text" name="name" required="required"/>
             </div> -->
-             <div class="col-md-6">
+            <div class="col-md-6">
               <label>Lugar / Capilla</label>
               <select class="form-select" name="chapel_id" required="required">
                 <option value="">-- Selecciona un lugar --</option>
@@ -39,9 +42,13 @@
                 </t>
               </select>
             </div>
-            <div class="col-md-6">
-              <label>Fecha</label>
-              <input class="form-control" type="date" name="date_only" id="date_only" required="required"/>
+            <div class="col-md-3">
+              <label>Fecha inicio</label>
+              <input class="form-control" type="date" name="date_start" id="date_start" required="required"/>
+            </div>
+            <div class="col-md-3">
+              <label>Fecha fin</label>
+              <input class="form-control" type="date" name="date_end" id="date_end" required="required"/>
             </div>
 
            
@@ -49,7 +56,7 @@
             <div class="col-12">
               <label>Horarios disponibles</label>
               <p class="text-muted small mb-1" id="chapel-schedule-status">
-                Selecciona una capilla y fecha para ver los horarios de misa.
+                Selecciona una capilla y rango de fechas para ver los horarios de misa.
               </p>
               <select class="form-select" id="chapel-schedule-select" name="schedule_id" disabled="disabled">
                 <option value="">-- Selecciona un horario --</option>
@@ -79,24 +86,36 @@
             </div>
           </div>
         </form>
-        <script>
+        <script><![CDATA[
           (function () {
-            const schedulesUrl = "<t t-esc='chapel_schedule_url'/>";
+            const configEl = document.getElementById('chapel-schedule-config');
+            const schedulesUrl = configEl ? configEl.dataset.schedulesUrl : '/shop/chapel/schedules';
             const chapelSelect = document.querySelector('select[name="chapel_id"]');
-            const dateInput = document.querySelector('#date_only');
+            const dateStartInput = document.querySelector('#date_start');
+            const dateEndInput = document.querySelector('#date_end');
+            const addQtyInput = document.querySelector('input[name="add_qty"]:not(#intention-add-qty)');
+            const addQtyHidden = document.querySelector('#intention-add-qty');
+            const dateRangeListInput = document.querySelector('#date-range-list');
             const scheduleSelect = document.querySelector('#chapel-schedule-select');
             const statusEl = document.getElementById('chapel-schedule-status');
 
-            if (!chapelSelect || !dateInput || !scheduleSelect || !statusEl) {
+            if (!chapelSelect || !dateStartInput || !dateEndInput || !scheduleSelect || !statusEl) {
               return;
             }
 
-            function resetSelect(message) {
+            const dayNames = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+
+            const setStatus = (message, isError = false) => {
+              statusEl.textContent = message;
+              statusEl.classList.toggle('text-danger', isError);
+              statusEl.classList.toggle('text-muted', !isError);
+            };
+
+            function resetSelect(message, isError = false) {
               scheduleSelect.innerHTML = '<option value="">-- Selecciona un horario --</option>';
               scheduleSelect.disabled = true;
               scheduleSelect.required = false;
-              statusEl.textContent = message;
-              statusEl.classList.add('text-muted');
+              setStatus(message, isError);
             }
 
             function renderSchedules(items) {
@@ -107,12 +126,11 @@
               scheduleSelect.appendChild(placeholder);
 
               if (!items || !items.length) {
-                resetSelect('No hay horarios disponibles para la fecha seleccionada.');
+                resetSelect('No hay horarios comunes para el rango seleccionado.', true);
                 return;
               }
 
-              statusEl.textContent = 'Selecciona un horario disponible:';
-              statusEl.classList.add('text-muted');
+              setStatus('Selecciona un horario disponible:');
               items.forEach((item) => {
                 const opt = document.createElement('option');
                 opt.value = item.id;
@@ -125,56 +143,165 @@
               scheduleSelect.required = true;
             }
 
-            async function loadSchedules() {
-              const chapelId = chapelSelect.value;
-              const dateStr = dateInput.value;
-              resetSelect('Selecciona una capilla y fecha para ver los horarios de misa.');
+            function parseDate(dateStr) {
+              if (!dateStr) {
+                return null;
+              }
+              const parsed = new Date(`${dateStr}T00:00:00`);
+              return Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
 
-              if (!chapelId || !dateStr) {
-                return;
+            function formatDate(dateObj) {
+              const year = dateObj.getFullYear();
+              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+              const day = String(dateObj.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            }
+
+            function buildDateRange(startStr, endStr) {
+              const start = parseDate(startStr);
+              const end = parseDate(endStr || startStr);
+              if (!start || !end || end < start) {
+                if (dateRangeListInput) {
+                  dateRangeListInput.value = '';
+                }
+                return [];
               }
 
-              statusEl.textContent = 'Cargando horarios...';
-              statusEl.classList.add('text-muted');
+              const dates = [];
+              const cursor = new Date(start.getTime());
+              while (cursor <= end) {
+                dates.push(formatDate(cursor));
+                cursor.setDate(cursor.getDate() + 1);
+              }
+              if (dateRangeListInput) {
+                dateRangeListInput.value = dates.join(',');
+              }
+              return dates;
+            }
 
-              try {
-                // Convertir la fecha seleccionada a nombre de día (lunes-domingo)
-                const dayNames = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
-                const parsedDate = dateStr ? new Date(`${dateStr}T00:00:00`) : null;
-                const jsDay = parsedDate ? parsedDate.getDay() : null; // domingo=0 ... sábado=6
-                const weekdayIdx = jsDay !== null ? (jsDay + 6) % 7 : null; // lunes=0 ... domingo=6
-                const weekdayName = weekdayIdx !== null ? dayNames[weekdayIdx] : null;
+            function getAddQty() {
+              const raw = addQtyInput
+                ? parseInt(addQtyInput.value, 10)
+                : parseInt(addQtyHidden && addQtyHidden.value ? addQtyHidden.value : '', 10);
+              return Number.isFinite(raw) && raw > 0 ? raw : 1;
+            }
 
-                const res = await fetch(schedulesUrl, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                  },
-                  body: JSON.stringify({
-                    chapel_id: chapelId,
-                    date_only: weekdayName || dateStr,
-                    date_value: dateStr,
-                  }),
-                });
-
-                if (!res.ok) {
-                  throw new Error('Error al consultar horarios');
-                }
-                const data = await res.json();
-                renderSchedules(data.schedules || []);
-              } catch (err) {
-                console.error(err);
-                resetSelect('No se pudieron cargar los horarios. Intenta de nuevo.');
+            function syncHiddenQty() {
+              if (addQtyHidden) {
+                addQtyHidden.value = getAddQty();
               }
             }
 
-            resetSelect('Selecciona una capilla y fecha para ver los horarios de misa.');
+            async function fetchSchedulesByDate(chapelId, dateStr) {
+              const parsedDate = parseDate(dateStr);
+              const jsDay = parsedDate ? parsedDate.getDay() : null; // domingo=0 ... sábado=6
+              const weekdayIdx = jsDay !== null ? (jsDay + 6) % 7 : null; // lunes=0 ... domingo=6
+              const weekdayName = weekdayIdx !== null ? dayNames[weekdayIdx] : null;
+
+              const res = await fetch(schedulesUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                  chapel_id: chapelId,
+                  date_only: weekdayName || dateStr,
+                  date_value: dateStr,
+                }),
+              });
+
+              if (!res.ok) {
+                throw new Error('Error al consultar horarios');
+              }
+              const data = await res.json();
+              return data.schedules || [];
+            }
+
+            function intersectSchedules(scheduleLists) {
+              if (!scheduleLists.length) {
+                return [];
+              }
+
+              const keyFor = (item) => `${item.start_time || ''}__${item.end_time || ''}`;
+              const [first, ...rest] = scheduleLists;
+              const baseMap = new Map();
+
+              first.forEach((item) => {
+                const key = keyFor(item);
+                if (!baseMap.has(key)) {
+                  baseMap.set(key, item);
+                }
+              });
+
+              const validKeys = Array.from(baseMap.keys()).filter((key) =>
+                rest.every((list) => list.some((item) => keyFor(item) === key))
+              );
+
+              return validKeys.map((key) => baseMap.get(key));
+            }
+
+            async function loadSchedules() {
+              resetSelect('Selecciona una capilla y rango de fechas para ver los horarios de misa.');
+              syncHiddenQty();
+              if (dateRangeListInput) {
+                dateRangeListInput.value = '';
+              }
+
+              const chapelId = chapelSelect.value;
+              const startStr = dateStartInput.value;
+              const endStr = dateEndInput.value || startStr;
+
+              if (!chapelId || !startStr || !endStr) {
+                return;
+              }
+
+              const dates = buildDateRange(startStr, endStr);
+              if (!dates.length) {
+                resetSelect('Selecciona un rango de fechas válido.', true);
+                return;
+              }
+
+              const qtyLimit = getAddQty();
+              if (qtyLimit && dates.length > qtyLimit) {
+                resetSelect(`Selecciona hasta ${qtyLimit} día(s) según la cantidad elegida.`, true);
+                return;
+              }
+
+              setStatus('Cargando horarios...');
+              scheduleSelect.disabled = true;
+
+              try {
+                const schedulesPerDay = await Promise.all(
+                  dates.map((dateStr) => fetchSchedulesByDate(chapelId, dateStr))
+                );
+                const matching = intersectSchedules(schedulesPerDay);
+                renderSchedules(matching);
+              } catch (err) {
+                console.error(err);
+                resetSelect('No se pudieron cargar los horarios. Intenta de nuevo.', true);
+              }
+            }
+
+            resetSelect('Selecciona una capilla y rango de fechas para ver los horarios de misa.');
             chapelSelect.addEventListener('change', loadSchedules);
-            dateInput.addEventListener('change', loadSchedules);
+            dateStartInput.addEventListener('change', loadSchedules);
+            dateEndInput.addEventListener('change', loadSchedules);
+            if (addQtyInput) {
+              const handleQty = () => {
+                syncHiddenQty();
+                loadSchedules();
+              };
+              addQtyInput.addEventListener('change', handleQty);
+              addQtyInput.addEventListener('input', handleQty);
+              syncHiddenQty();
+            } else {
+              syncHiddenQty();
+            }
           })();
-        </script>
+        ]]></script>
       </t>
 
     </xpath>
